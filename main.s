@@ -1,5 +1,5 @@
 section .data
-	x dq 354234000
+	x dq 354234
 	y dq 1
 	n db 10
   c db 10,0
@@ -9,9 +9,13 @@ section .text
 global _start
 
 _start:
-  mov r8, 1
+  mov rax, [x]
+  call mod
+  mov rax, [x]
+  mov r8, 10
   loop:
-    mov rax, [x]
+    ;change rax not r8
+    ;refactor mod so that it just keeps the divided rax taking the rdx and prining
     xor rdx, rdx
     div r8
     push rax
@@ -19,15 +23,9 @@ _start:
     call mod
 
     pop r8
-    mov rax, r8
-    mov r8, 10
-    mul r8
-    mov r8, rax
+
     pop rax
-    push r8
-    mov r8, 10
-    div r8
-    pop r8
+    
     cmp rax, 0
     jne loop
     
