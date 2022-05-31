@@ -10,8 +10,6 @@ global _start
 
 _start:
   mov r8, 1
-
-
   loop:
     mov rax, [x]
     xor rdx, rdx
