@@ -10,22 +10,17 @@ global _start
 
 _start:
   mov rax, [x]
-  call mod
-  mov rax, [x]
   mov r8, 10
+  mov rcx, 0
   loop:
-    ;change rax not r8
-    ;refactor mod so that it just keeps the divided rax taking the rdx and prining
     xor rdx, rdx
     div r8
     push rax
-    push r8
-    call mod
-
-    pop r8
-
+    add rdx, 48
+    mov byte [c], dl
+    mov rsi, c
+    call print
     pop rax
-    
     cmp rax, 0
     jne loop
     
@@ -36,21 +31,6 @@ _start:
 
   
   jmp ending
-
-
-mod:
-  xor rdx, rdx
-  mov r9, rax
-  mov r8, 0xa
-  div r8
-  add rdx, 48
-  mov byte [c], dl
-  mov rax, 1
-	mov rdi, 1
-	mov rdx, 1
-  mov rsi, c
-  syscall
-  ret
 
 
 print:
