@@ -1,16 +1,26 @@
 section .data
-	x dq 355564
+	x dq 0
 	y dq 1
 	n db 10
-  c db 10,0
   s db "how is this being printed",0
-
+section .bss
+  c resb 20
 section .text
 global _start
 
 _start:
+  mov rcx, 200
+  loop:
+  push rcx
   mov rsi, x
   call printn
+  call iterate
+  pop rcx
+  dec rcx
+  cmp rcx, 0
+  ja loop
+
+
 
     
 
@@ -23,15 +33,18 @@ printn:
   mov rax, [rsi]
   mov r8, 10
   mov r9, 1
+  cmp rax, 10
+  jb skip
   find:
     inc r9
     xor rdx, rdx
     div r8
     cmp rax, 10
     ja find
+  skip:
   mov rax, [rsi]
   mov rcx, r9
-  loop:
+  loopthroughdigits:
     xor rdx, rdx
     div r8
     push rax
@@ -40,10 +53,10 @@ printn:
     mov byte [c+rcx], dl
     pop rax
     cmp rax, 0
-    jne loop
+    jne loopthroughdigits
     mov byte [c+r9], 0
     mov rsi, c
-    call print
+    call println
     ret
 print:
 	mov rax, 1
@@ -67,12 +80,14 @@ println:
   ret
 iterate:
   push rax 
+  push r8
   mov rax, [x]
   add rax, [y]
   mov r8, [y]
   mov qword [x], r8
   mov qword [y], rax
   pop rax
+  pop r8
   ret
 
 ending:
