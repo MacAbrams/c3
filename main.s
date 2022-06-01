@@ -1,5 +1,5 @@
 section .data
-	x dq 354234
+	x dq 355564
 	y dq 1
 	n db 10
   c db 10,0
@@ -9,22 +9,8 @@ section .text
 global _start
 
 _start:
-  mov rax, [x]
-  mov r8, 10
-  mov rcx, 0
-  loop:
-    xor rdx, rdx
-    div r8
-    push rax
-    add rdx, 48
-    mov byte [c], dl
-    mov rsi, c
-    call print
-    pop rax
-    cmp rax, 0
-    jne loop
-    
-
+  mov rsi, x
+  call printn
 
     
 
@@ -33,6 +19,32 @@ _start:
   jmp ending
 
 
+printn:
+  mov rax, [rsi]
+  mov r8, 10
+  mov r9, 1
+  find:
+    inc r9
+    xor rdx, rdx
+    div r8
+    cmp rax, 10
+    ja find
+  mov rax, [rsi]
+  mov rcx, r9
+  loop:
+    xor rdx, rdx
+    div r8
+    push rax
+    add rdx, 48
+    dec rcx
+    mov byte [c+rcx], dl
+    pop rax
+    cmp rax, 0
+    jne loop
+    mov byte [c+r9], 0
+    mov rsi, c
+    call print
+    ret
 print:
 	mov rax, 1
 	mov rdi, 1
