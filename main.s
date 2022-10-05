@@ -1,97 +1,185 @@
 section .data
-	x dq 0
-	y dq 1
-	n db 10
-  s db "how is this being printed",0
+  s db "Hello, I'm Mac",10,0
+  input dd 5; 01111101
+  output db "00000000000000000000000000000000"
+  switchTest db "01234567",10,0
+  n db 5
+;;;;;;;;;;;;;;;;
+;;  XORSHIFT  ;;
+;;;;;;;;;;;;;;;;
+  state dd 1  ;;
+;;;;;;;;;;;;;;;;
+
 section .bss
-  c resb 20
+  c resb 256
+
 section .text
 global _start
-
 _start:
-  mov rcx, 200
-  loop:
-  push rcx
-  mov rsi, x
-  call printn
-  call iterate
-  pop rcx
-  dec rcx
-  cmp rcx, 0
-  ja loop
+ ; xor rax, rax
+  ;call xorShift
+  ;mov [input], eax
 
 
+  lea rsi, input
+  lea rdi, output
+  mov rbx, 10
+  call intToString
 
-    
 
-
-  
+  lea rsi, output
+  call printS
   jmp ending
 
 
-printn:
-  mov rax, [rsi]
-  mov r8, 10
-  mov r9, 1
-  cmp rax, 10
-  jb skip
-  find:
-    inc r9
-    xor rdx, rdx
-    div r8
-    cmp rax, 10
-    ja find
-  skip:
-  mov rax, [rsi]
-  mov rcx, r9
-  loopthroughdigits:
-    xor rdx, rdx
-    div r8
-    push rax
-    add rdx, 48
-    dec rcx
-    mov byte [c+rcx], dl
-    pop rax
-    cmp rax, 0
-    jne loopthroughdigits
-    mov byte [c+r9], 0
-    mov rsi, c
-    call println
-    ret
-print:
-	mov rax, 1
-	mov rdi, 1
-	mov rdx, 1
-	syscall
-  add rsi, 1
-  cmp byte [rsi], 0
-	jne print
-  ret
-println:
-	mov rax, 1
-	mov rdi, 1
-	mov rdx, 1
-	syscall
-  add rsi, 1
-  cmp byte [rsi], 0
-	jne println
-  mov rsi, n
-  syscall
-  ret
-iterate:
-  push rax 
-  push r8
-  mov rax, [x]
-  add rax, [y]
-  mov r8, [y]
-  mov qword [x], r8
-  mov qword [y], rax
-  pop rax
-  pop r8
-  ret
+
+xorShift:
+  push rax
+  push rbx
+  mov eax, [state]
+  mov ebx, eax
+  shr ebx, 12
+pop rbx
+ret
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;       SWITCH             ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;rax is start index           ;;
+;rdi is end value             ;;
+switch:                       ;;
+  push rsi                    ;;
+  push rbx                    ;;
+  switchloop:                 ;;
+    xor rsi,rsi               ;;
+    xor rbx,rbx               ;;
+    mov rsi, [rax]            ;;
+    mov rbx, [rdi]            ;;
+    mov byte[rax], bl         ;;
+    mov byte[rdi], sil        ;;
+    inc rax                   ;;
+    dec rdi                   ;;
+    cmp rax, rdi              ;;
+    jb switchloop             ;;
+pop rsi                       ;;
+pop rbx                       ;;
+ret                           ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;takes int in memory and stores a string          ;;
+;returns memory address                           ;;
+; src in rsi                                      ;;
+; base in rbx                                     ;;
+; dest in rdi                                     ;;
+intToString:                                      ;;
+  push rax                                        ;;
+  push rcx                                        ;;
+                                                  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;                         ;;
+;;; INT SIZE CONTROLL ;;;                         ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;                         ;;
+  mov eax, [rsi]      ;;;                         ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;                         ;;
+                                                  ;;
+  xor rcx,rcx                                     ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;          ;;
+  intToStringLoop:                                ;;
+    div rbx                                       ;;
+    add dl, 48                                    ;;
+    mov byte [rdi+rcx], dl                        ;;
+    inc rcx                                       ;;
+    xor rdx,rdx                                   ;;
+                                                  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;          ;;
+    cmp al, 0                                     ;;
+    ja intToStringLoop                            ;;
+;;;;;;;;;;;;;;;;;;;;                              ;;
+;; reverse string ;;                              ;;
+;;;;;;;;;;;;;;;;;;;;                              ;;
+                                                  ;;
+  intToStringfindStart:                        ;;
+    cmp rcx, 0                                    ;;
+    je intToStringIsZero                          ;;
+    cmp byte [rdi+rcx],48                         ;;
+    jne intToStringSwitchArea                     ;;
+    dec rcx                                       ;;
+    jmp intToStringfindStart                      ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;          ;;
+intToStringSwitchArea:                            ;;
+  ;set null after rcx+1                           ;;
+  inc rcx                                         ;;
+  mov byte [rdi+rcx], 0                           ;;
+  dec rcx                                         ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;          ;;
+  mov rax, rdi                                    ;;
+  add rdi, rcx                                    ;;
+  call switch                                     ;;
+                                                  ;;
+  jmp intToStringEnd                              ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;          ;;
+intToStringIsZero:                                ;;
+  mov byte [rdi+1], 0                             ;;
+  jmp intToStringEnd                              ;;
+                                                  ;;
+intToStringEnd:                                   ;;
+  pop rcx                                         ;;
+  pop rax                                         ;;
+ret                                               ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;       PRINT STRING         ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;rsi holds location to memory   ;;
+;prints string                  ;;
+printS:                         ;;
+  push rax                      ;;
+  push rcx                      ;;
+  push rdi                      ;;
+  xor rcx, rcx                  ;;
+  xor rax,rax                   ;;
+  printSCheckLoop:              ;;
+    mov al, [rsi+rcx]           ;;
+    cmp rax, 0                  ;;
+    je printSCheckLoopEnd       ;;
+    inc rcx                     ;;
+    jmp printSCheckLoop         ;;
+  printSCheckLoopEnd:           ;;
+    mov rax, 1                  ;;
+    mov rdx, rcx                ;;
+    mov rdi, 0                  ;;
+    syscall                     ;;
+  pop rax                       ;;
+  pop rcx                       ;;
+  pop rdi                       ;;
+  ret                           ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
+
 
 ending:
-  pop r10
-	xor rdi, rdi
-	mov rax, 60
-	syscall
+  xor rdi, rdi
+  mov rax, 60
+  syscall
